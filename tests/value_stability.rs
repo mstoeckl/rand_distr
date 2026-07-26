@@ -100,13 +100,13 @@ fn hypergeometric_stability() {
     test_samples(
         7221,
         Hypergeometric::new(99, 33, 8).unwrap(),
-        &[4, 3, 2, 2, 3, 2, 3, 1],
-    ); // Algorithm HIN
+        &[3, 5, 2, 2, 2, 2, 3, 6],
+    );
     test_samples(
         7221,
         Hypergeometric::new(100, 50, 50).unwrap(),
-        &[23, 27, 26, 27, 22, 25, 31, 25],
-    ); // Algorithm H2PE
+        &[26, 19, 27, 28, 27, 26, 27, 24],
+    );
 }
 
 #[test]

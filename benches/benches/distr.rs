@@ -57,6 +57,12 @@ macro_rules! sample_binomial {
     };
 }
 
+macro_rules! sample_hypergeometric {
+    ($group:ident, $name:expr, $nn:expr, $kk:expr, $n:expr) => {
+        distr_int!($group, $name, u64, Hypergeometric::new($nn, $kk, $n).unwrap())
+    };
+}
+
 fn bench(c: &mut Criterion<CyclesPerByte>) {
     let mut g = c.benchmark_group("exp");
     distr_float!(g, "exp", f64, Exp::new(1.23 * 4.56).unwrap());
@@ -147,6 +153,12 @@ fn bench(c: &mut Criterion<CyclesPerByte>) {
     sample_binomial!(g, "100", 100, 0.99);
     sample_binomial!(g, "1000", 1000, 0.01);
     sample_binomial!(g, "1e12", 1_000_000_000_000, 0.2);
+    g.finish();
+
+    let mut g = c.benchmark_group("hypergeometric");
+    sample_hypergeometric!(g, "10", 15, 13, 10);
+    sample_hypergeometric!(g, "100", 140, 120, 100);
+    sample_hypergeometric!(g, "1e7", 8_000_000_000, 2_000_000_000, 10_000_000);
     g.finish();
 
     let mut g = c.benchmark_group("poisson");

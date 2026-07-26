@@ -426,18 +426,16 @@ fn geometric() {
 
 #[test]
 fn hypergeometric() {
-    fn cdf(x: i64, n: u64, k: u64, n_: u64) -> f64 {
+    fn pdf(n: u64, k: u64, n_: u64, k_: u64) -> f64 {
         let min = (n_ + k).saturating_sub(n);
         let max = k.min(n_);
-        if x < min as i64 {
-            return 0.0;
-        } else if x >= max as i64 {
-            return 1.0;
+        if k_ < min {
+            0.0
+        } else if k_ >= max {
+            0.0
+        } else {
+            (ln_binomial(k, k_) + ln_binomial(n - k, n_ - k_) - ln_binomial(n, n_)).exp()
         }
-
-        (min..x as u64 + 1).fold(0.0, |acc, k_| {
-            acc + (ln_binomial(k, k_) + ln_binomial(n - k, n_ - k_) - ln_binomial(n, n_)).exp()
-        })
     }
 
     let parameters = [
@@ -447,11 +445,31 @@ fn hypergeometric() {
         (70, 20, 50),
         (100, 50, 10),
         (100, 50, 49),
+        /* moderately large values, not yet in f64 overflow regime,
+         * but with n_ small enough to keep CDF in memory */
+        (8_000_000_000, 2_000_000_000, 5_000_000),
     ];
 
     for (seed, (n, k, n_)) in parameters.into_iter().enumerate() {
+        println!("N {} K {} n {}", n, k, n_);
         let dist = rand_distr::Hypergeometric::new(n, k, n_).unwrap();
-        test_discrete(seed as u64, dist, |x| cdf(x, n, k, n_));
+
+        let mut cdf = vec![0.0; n_ as usize + 1];
+        cdf[0] = pdf(n, k, n_, 0);
+        for k_ in 1..n_ {
+            cdf[k_ as usize] = cdf[k_ as usize - 1] + pdf(n, k, n_, k_);
+        }
+        cdf[n_ as usize] = 1.0;
+
+        test_discrete(seed as u64, dist, |x| {
+            if x < 0 as i64 {
+                0.0
+            } else if x >= n_ as i64 {
+                1.0
+            } else {
+                cdf[x as usize]
+            }
+        });
     }
 }
 
